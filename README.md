@@ -1,10 +1,10 @@
-# 📊 TaxGenie
+# 🧞‍♂️ TaxGenie 🧞
 
 An intelligent, cloud-based financial management platform built specifically for freelancers, gig workers, and solo entrepreneurs. It streamlines income and expense tracking, automates tax report generation, and provides real-time financial insights — all within a single, user-friendly interface.
 
 The platform is designed to take the stress out of tax season by helping users stay organized year-round, avoid surprises, and make informed financial decisions. With seamless data handling and powerful analytics powered by Alibaba Cloud tools, it empowers freelancers to focus on their work without losing track of their finances.
 
-![taxgenie](https://github.com/user-attachments/assets/c5ac15ab-b677-4d74-8a05-409774b5985a)
+<img src="https://github.com/user-attachments/assets/c5ac15ab-b677-4d74-8a05-409774b5985a" width="300" alt="taxgenie" />
 
 
 ## 🧩 The Problem
