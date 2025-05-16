@@ -4,7 +4,7 @@ An intelligent, cloud-based financial management platform built specifically for
 
 The platform is designed to take the stress out of tax season by helping users stay organized year-round, avoid surprises, and make informed financial decisions. With seamless data handling and powerful analytics powered by Alibaba Cloud tools, it empowers freelancers to focus on their work without losing track of their finances.
 
-<img src="https://github.com/user-attachments/assets/c5ac15ab-b677-4d74-8a05-409774b5985a" width="300" alt="taxgenie" />
+<p align="center"><img src="https://github.com/user-attachments/assets/c5ac15ab-b677-4d74-8a05-409774b5985a" width="300" alt="taxgenie" /></p>
 
 
 ## 🧩 The Problem
@@ -63,9 +63,9 @@ We created **Tax Genie**, a smart and scalable tool that helps freelancers:
 
 - **Venesse Hee Chiao Wei**  
   - *Role*:
-  - [LinkedIn](linkedin.com/in/heechiaowei)
+  - [LinkedIn](https://www.linkedin.com/in/heechiaowei)
 
- - **Lee Shi En**  
+- **Lee Shi En**  
   - *Role*:
   - [LinkedIn]()
 
