@@ -207,6 +207,16 @@ export default function TaxReportPage() {
                   {analysisResult.analysis}
                 </p>
               </div>
+              <div className="mt-6 flex justify-end">
+                <a
+                  href="https://mytax.hasil.gov.my/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-md shadow transition-colors"
+                >
+                  Proceed to MyTax
+                </a>
+              </div>
             </div>
           </div>
         </div>
