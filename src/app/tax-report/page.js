@@ -1,11 +1,195 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function TaxReportPage() {
+  const [file, setFile] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [analysisResult, setAnalysisResult] = useState(null);
+
+  const handleFileUpload = async (event) => {
+    const uploadedFile = event.target.files[0];
+    if (uploadedFile && uploadedFile.type === 'text/csv') {
+      setFile(uploadedFile);
+      setError(null);
+    } else {
+      setError('Please upload a valid CSV file');
+      setFile(null);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!file) {
+      setError('Please select a file first');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/analyze-tax', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to process the file');
+      }
+
+      setAnalysisResult(data);
+    } catch (err) {
+      console.error('Error:', err);
+      setError(err.message || 'An error occurred while processing the file');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Tax Report</h1>
+      
+      {/* File Upload Section */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">Upload Tax Data</h2>
+        <div className="space-y-4">
+          <div className="flex items-center space-x-4">
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileUpload}
+              className="block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-md file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-50 file:text-blue-700
+                hover:file:bg-blue-100"
+            />
+            <button
+              onClick={handleSubmit}
+              disabled={!file || isLoading}
+              className={`px-4 py-2 rounded-md text-white font-medium
+                ${!file || isLoading 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700'}`}
+            >
+              {isLoading ? 'Processing...' : 'Analyze'}
+            </button>
+          </div>
+          
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <p className="text-red-600 text-sm font-medium">Error</p>
+              <p className="text-red-500 text-sm mt-1">{error}</p>
+            </div>
+          )}
+          
+          {file && (
+            <div className="bg-gray-50 rounded-md p-4">
+              <p className="text-sm text-gray-600">
+                Selected file: {file.name}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Make sure your CSV file has the following headers: type, amount, description, date
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Analysis Results Section */}
+      {analysisResult && (
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4">Tax Analysis Results</h2>
+          <div className="space-y-6">
+            {/* Summary Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-medium mb-2">Total Income</h3>
+                <p className="text-2xl font-bold text-green-600">
+                  RM {analysisResult.totalIncome.toFixed(2)}
+                </p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-medium mb-2">Total Deductions</h3>
+                <p className="text-2xl font-bold text-red-600">
+                  RM {analysisResult.totalDeductions.toFixed(2)}
+                </p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-medium mb-2">Taxable Income</h3>
+                <p className="text-2xl font-bold text-blue-600">
+                  RM {analysisResult.taxableIncome.toFixed(2)}
+                </p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-medium mb-2">Estimated Tax</h3>
+                <p className="text-2xl font-bold text-purple-600">
+                  RM {analysisResult.estimatedTax.toFixed(2)}
+                </p>
+              </div>
+            </div>
+
+            {/* Declarable Expenses */}
+            <div>
+              <h3 className="text-lg font-medium mb-3">Declarable Expenses</h3>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <ul className="list-disc list-inside space-y-2">
+                  {Array.isArray(analysisResult.declarableExpenses) && analysisResult.declarableExpenses.map((expense, index) => (
+                    <li key={index} className="text-gray-700">
+                      {typeof expense === 'object' ? (
+                        <span>
+                          <span className="font-semibold">{expense.Category}</span>: RM {expense.Amount} <span className="italic">{expense.Note}</span>
+                        </span>
+                      ) : (
+                        expense
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Tax Relief Expenses */}
+            <div>
+              <h3 className="text-lg font-medium mb-3">Tax Relief Expenses</h3>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <ul className="list-disc list-inside space-y-2">
+                  {Array.isArray(analysisResult.taxReliefExpenses) && analysisResult.taxReliefExpenses.map((expense, index) => (
+                    <li key={index} className="text-gray-700">
+                      {typeof expense === 'object' ? (
+                        <span>
+                          <span className="font-semibold">{expense.Category}</span>: RM {expense.Amount} <span className="italic">{expense.Note}</span>
+                        </span>
+                      ) : (
+                        expense
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Detailed Analysis */}
+            <div>
+              <h3 className="text-lg font-medium mb-3">Detailed Analysis</h3>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-gray-700 whitespace-pre-line">
+                  {analysisResult.analysis}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow p-6">
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Tax Year Summary</h2>
