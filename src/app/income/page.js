@@ -1,8 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function IncomePage() {
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  const handleFileChange = (event) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Income Tracking</h1>
@@ -35,6 +43,31 @@ export default function IncomePage() {
                 id="date"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               />
+            </div>
+            <div>
+              <label htmlFor="file" className="block text-sm font-medium text-gray-700">Supporting Document</label>
+              <div className="mt-1 flex items-center">
+                <label
+                  htmlFor="file-upload"
+                  className="cursor-pointer bg-white px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Choose file
+                  <input
+                    id="file-upload"
+                    name="file-upload"
+                    type="file"
+                    className="sr-only"
+                    onChange={handleFileChange}
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  />
+                </label>
+                <span className="ml-3 text-sm text-gray-500">
+                  {selectedFile ? selectedFile.name : 'No file selected'}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Accepted file types: PDF, JPG, PNG, DOC, DOCX
+              </p>
             </div>
             <button
               type="submit"
