@@ -199,46 +199,6 @@ export default function TaxReportPage() {
               </div>
             </div>
 
-            {/* Declarable Expenses */}
-            <div>
-              <h3 className="text-lg font-medium mb-3">Declarable Expenses</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <ul className="list-disc list-inside space-y-2">
-                  {Array.isArray(analysisResult.declarableExpenses) && analysisResult.declarableExpenses.map((expense, index) => (
-                    <li key={index} className="text-gray-700">
-                      {typeof expense === 'object' ? (
-                        <span>
-                          <span className="font-semibold">{expense.Category}</span>: RM {expense.Amount} <span className="italic">{expense.Note}</span>
-                        </span>
-                      ) : (
-                        expense
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Tax Relief Expenses */}
-            <div>
-              <h3 className="text-lg font-medium mb-3">Tax Relief Expenses</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <ul className="list-disc list-inside space-y-2">
-                  {Array.isArray(analysisResult.taxReliefExpenses) && analysisResult.taxReliefExpenses.map((expense, index) => (
-                    <li key={index} className="text-gray-700">
-                      {typeof expense === 'object' ? (
-                        <span>
-                          <span className="font-semibold">{expense.Category}</span>: RM {expense.Amount} <span className="italic">{expense.Note}</span>
-                        </span>
-                      ) : (
-                        expense
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
             {/* Detailed Analysis */}
             <div>
               <h3 className="text-lg font-medium mb-3">Detailed Analysis</h3>
