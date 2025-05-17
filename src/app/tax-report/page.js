@@ -181,9 +181,19 @@ export default function TaxReportPage() {
             <div>
               <h3 className="text-lg font-medium mb-3">Detailed Analysis</h3>
               <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-gray-700 whitespace-pre-line">
-                  {analysisResult.analysis}
-                </p>
+                {/* Format analysis as paragraphs or bullet points */}
+                {analysisResult.analysis && (
+                  <div className="space-y-2 text-gray-700">
+                    {analysisResult.analysis
+                      .split(/(?<=[.!?])\s+(?=[A-Z])/)
+                      .map((sentence, idx) => (
+                        <p key={idx} className="leading-relaxed flex items-start">
+                          <span className="mr-2 text-blue-500">•</span>
+                          <span>{sentence.trim()}</span>
+                        </p>
+                      ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -196,19 +206,27 @@ export default function TaxReportPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-medium mb-2">Total Income</h3>
-              <p className="text-2xl font-bold text-green-600">$0.00</p>
+              <p className="text-2xl font-bold text-green-600">
+                RM {(analysisResult ? analysisResult.totalIncome : 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+              </p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-medium mb-2">Total Deductions</h3>
-              <p className="text-2xl font-bold text-red-600">$0.00</p>
+              <p className="text-2xl font-bold text-red-600">
+                RM {(analysisResult ? analysisResult.totalDeductions : 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+              </p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-medium mb-2">Taxable Income</h3>
-              <p className="text-2xl font-bold text-blue-600">$0.00</p>
+              <p className="text-2xl font-bold text-blue-600">
+                RM {(analysisResult ? analysisResult.taxableIncome : 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+              </p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-medium mb-2">Estimated Tax</h3>
-              <p className="text-2xl font-bold text-purple-600">$0.00</p>
+              <p className="text-2xl font-bold text-purple-600">
+                RM {(analysisResult ? analysisResult.estimatedTax : 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+              </p>
             </div>
           </div>
         </div>

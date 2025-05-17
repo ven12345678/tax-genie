@@ -1,10 +1,34 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { MongoClient } from 'mongodb';
 
 const client = new OpenAI({
   apiKey: process.env.DASHSCOPE_API_KEY,
   baseURL: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
 });
+
+const MONGODB_URI = 'mongodb+srv://venessehee2004:<db_password>@taxgenie.9vx7mrp.mongodb.net/?retryWrites=true&w=majority&appName=taxgenie';
+const DB_NAME = 'taxgenie';
+const COLLECTION_NAME = 'tax_results';
+
+async function storeTaxResult(result) {
+  const mongoClient = new MongoClient(MONGODB_URI);
+  await mongoClient.connect();
+  const db = mongoClient.db(DB_NAME);
+  const collection = db.collection(COLLECTION_NAME);
+  await collection.insertOne(result);
+  await mongoClient.close();
+}
+
+async function getAllTaxResults() {
+  const mongoClient = new MongoClient(MONGODB_URI);
+  await mongoClient.connect();
+  const db = mongoClient.db(DB_NAME);
+  const collection = db.collection(COLLECTION_NAME);
+  const results = await collection.find({}).sort({ timestamp: -1 }).toArray();
+  await mongoClient.close();
+  return results;
+}
 
 export async function POST(request) {
   try {
@@ -52,7 +76,7 @@ export async function POST(request) {
       });
     } else {
       // Fallback to previous expected format
-      const requiredHeaders = ['Date', 'Account', 'Category', 'Note','Income/Expense' ,'Amount'];
+      const requiredHeaders = ['type', 'amount', 'description', 'date'];
       const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
       if (missingHeaders.length > 0) {
         return NextResponse.json(
@@ -69,8 +93,27 @@ export async function POST(request) {
       });
     }
 
+    // Find the latest year in the data
+    const years = formattedData
+      .map(row => {
+        const d = row.date || row.Date;
+        if (!d) return null;
+        const year = d.split('-')[0];
+        return year && !isNaN(Number(year)) ? Number(year) : null;
+      })
+      .filter(Boolean);
+    const latestYear = years.length > 0 ? Math.max(...years) : null;
+
+    // Filter data to only include entries from the latest year
+    const latestYearData = latestYear
+      ? formattedData.filter(row => {
+          const d = row.date || row.Date;
+          return d && d.startsWith(latestYear.toString());
+        })
+      : formattedData;
+
     // Create the prompt for Qwen
-    const prompt = `According to Malaysia taxation law, analyze the following income and expenses data and provide:\n1. Which expenses need to be declared\n2. Which expenses can be used for tax relief\n3. Calculate the total taxable income and estimated tax\n\nHere is the data:\n${JSON.stringify(formattedData, null, 2)}\n\nPlease provide a detailed analysis in JSON format with the following structure:\n{\n  "declarableExpenses": [],\n  "taxReliefExpenses": [],\n  "totalIncome": 0,\n  "totalDeductions": 0,\n  "taxableIncome": 0,\n  "estimatedTax": 0,\n  "analysis": ""\n}`;
+    const prompt = `According to Malaysia taxation law, analyze the following income and expenses data for the year ${latestYear || ''} and provide:\n1. Which expenses need to be declared\n2. Which expenses can be used for tax relief\n3. Calculate the total taxable income and estimated tax\n\nHere is the data:\n${JSON.stringify(latestYearData, null, 2)}\n\nRespond ONLY with valid JSON, no markdown, no explanation, no extra text. Use this structure:\n{\n  "declarableExpenses": [],\n  "taxReliefExpenses": [],\n  "totalIncome": 0,\n  "totalDeductions": 0,\n  "taxableIncome": 0,\n  "estimatedTax": 0,\n  "analysis": ""\n}`;
 
     try {
       // Call Qwen model
@@ -115,7 +158,22 @@ export async function POST(request) {
           }, { status: 500 });
         }
       }
-      return NextResponse.json(analysis);
+
+      // Store the result in MongoDB
+      const resultToStore = {
+        ...analysis,
+        year: latestYear,
+        timestamp: new Date(),
+      };
+      await storeTaxResult(resultToStore);
+
+      // Get all stored results
+      const allResults = await getAllTaxResults();
+
+      return NextResponse.json({
+        analysis,
+        allResults,
+      });
     } catch (modelError) {
       console.error('Model API Error:', modelError);
       if (modelError.response) {
