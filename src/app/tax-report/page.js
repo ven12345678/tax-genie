@@ -1,12 +1,36 @@
 'use client';
-
-import React, { useState } from 'react';
+//a
+import React, { useState, useEffect } from 'react';
 
 export default function TaxReportPage() {
   const [file, setFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzingMongoDB, setIsAnalyzingMongoDB] = useState(false);
   const [error, setError] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [taxHistory, setTaxHistory] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+
+  useEffect(() => {
+    fetchTaxHistory();
+  }, []);
+
+  const fetchTaxHistory = async () => {
+    try {
+      const response = await fetch('/api/tax-history');
+      const data = await response.json();
+      
+      if (data.success) {
+        setTaxHistory(data.data);
+      } else {
+        console.error('Failed to fetch tax history:', data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching tax history:', error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
 
   const handleFileUpload = async (event) => {
     const uploadedFile = event.target.files[0];
@@ -44,11 +68,39 @@ export default function TaxReportPage() {
       }
 
       setAnalysisResult(data);
+      // Refresh tax history after new analysis
+      fetchTaxHistory();
     } catch (err) {
       console.error('Error:', err);
       setError(err.message || 'An error occurred while processing the file');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAnalyzeMongoDB = async () => {
+    setIsAnalyzingMongoDB(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/analyze-mongodb', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to analyze data from MongoDB');
+      }
+
+      setAnalysisResult(data);
+      // Refresh tax history after new analysis
+      fetchTaxHistory();
+    } catch (err) {
+      console.error('Error:', err);
+      setError(err.message || 'An error occurred while analyzing data');
+    } finally {
+      setIsAnalyzingMongoDB(false);
     }
   };
 
@@ -80,7 +132,17 @@ export default function TaxReportPage() {
                   ? 'bg-gray-400 cursor-not-allowed' 
                   : 'bg-blue-600 hover:bg-blue-700'}`}
             >
-              {isLoading ? 'Processing...' : 'Analyze'}
+              {isLoading ? 'Processing...' : 'Analyze CSV'}
+            </button>
+            <button
+              onClick={handleAnalyzeMongoDB}
+              disabled={isAnalyzingMongoDB}
+              className={`px-4 py-2 rounded-md text-white font-medium
+                ${isAnalyzingMongoDB
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-green-600 hover:bg-green-700'}`}
+            >
+              {isAnalyzingMongoDB ? 'Analyzing...' : 'Analyze from Database'}
             </button>
           </div>
           
@@ -190,25 +252,72 @@ export default function TaxReportPage() {
         </div>
       )}
 
+      {/* Tax Report History Section */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4">Tax Report History</h2>
+        {isLoadingHistory ? (
+          <div className="flex justify-center items-center p-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        ) : taxHistory.length === 0 ? (
+          <p className="text-gray-500 text-center py-4">No tax reports available</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Income</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Deductions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Taxable Income</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estimated Tax</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {taxHistory.map((report) => (
+                  <tr key={report._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(report.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
+                      RM {report.totalIncome.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
+                      RM {report.totalDeductions.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
+                      RM {report.taxableIncome.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-purple-600">
+                      RM {report.estimatedTax.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       <div className="bg-white rounded-lg shadow p-6">
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Tax Year Summary</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-medium mb-2">Total Income</h3>
-              <p className="text-2xl font-bold text-green-600">$0.00</p>
+              <p className="text-2xl font-bold text-green-600">RM0.00</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-medium mb-2">Total Deductions</h3>
-              <p className="text-2xl font-bold text-red-600">$0.00</p>
+              <p className="text-2xl font-bold text-red-600">RM0.00</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-medium mb-2">Taxable Income</h3>
-              <p className="text-2xl font-bold text-blue-600">$0.00</p>
+              <p className="text-2xl font-bold text-blue-600">RM0.00</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-medium mb-2">Estimated Tax</h3>
-              <p className="text-2xl font-bold text-purple-600">$0.00</p>
+              <p className="text-2xl font-bold text-purple-600">RM0.00</p>
             </div>
           </div>
         </div>
