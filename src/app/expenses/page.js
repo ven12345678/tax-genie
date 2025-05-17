@@ -11,18 +11,27 @@ export default function ExpensesPage() {
   const handleFileChange = (event) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-      if (!file.name.match(/\.(csv)$/)) {
-        setError('Please upload a valid CSV file');
-        return;
-      }
+      const fileType = file.name.split('.').pop().toLowerCase();
+      
+      // Accept all file types but warn about non-CSV files
       setSelectedFile(file);
-      setError(null);
+      if (fileType !== 'csv') {
+        setError('Note: Only CSV files can be analyzed at the moment. Other file types will be supported in future updates.');
+      } else {
+        setError(null);
+      }
     }
   };
 
   const handleFileUpload = async () => {
     if (!selectedFile) {
       setError('Please select a file first');
+      return;
+    }
+
+    // Only process CSV files for now
+    if (!selectedFile.name.match(/\.(csv)$/)) {
+      setError('Currently, only CSV files can be processed for analysis. Support for other file types coming soon!');
       return;
     }
 
@@ -98,17 +107,26 @@ export default function ExpensesPage() {
             <div className="bg-blue-50 rounded-md p-4 mb-4">
               <h3 className="text-sm font-medium text-blue-800 mb-2">File Requirements:</h3>
               <ul className="text-sm text-blue-700 list-disc list-inside">
-                <li>CSV file format only</li>
-                <li>Required columns: Date, Category, Amount</li>
-                <li>Optional columns: Description</li>
-                <li>Date format: YYYY-MM-DD</li>
-                <li>Amount should be numeric</li>
+                <li>Supported file types:
+                  <ul className="ml-6 list-disc">
+                    <li>CSV files (fully supported)</li>
+                    <li>PDF files (coming soon)</li>
+                    <li>Images - PNG, JPG (coming soon)</li>
+                  </ul>
+                </li>
+                <li className="mt-2">For CSV files:</li>
+                <ul className="ml-6 list-disc">
+                  <li>Required columns: Date, Category, Amount</li>
+                  <li>Optional columns: Description</li>
+                  <li>Date format: YYYY-MM-DD</li>
+                  <li>Amount should be numeric</li>
+                </ul>
               </ul>
             </div>
             <div className="flex items-center space-x-4">
               <input
                 type="file"
-                accept=".csv"
+                accept=".csv,.pdf,.png,.jpg,.jpeg"
                 onChange={handleFileChange}
                 className="block w-full text-sm text-gray-500
                   file:mr-4 file:py-2 file:px-4
@@ -131,9 +149,27 @@ export default function ExpensesPage() {
           </div>
           
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <p className="text-red-600 font-medium mb-1">Error</p>
-              <p className="text-red-500 text-sm">{error}</p>
+            <div className={`border rounded-md p-4 ${
+              selectedFile && !selectedFile.name.match(/\.(csv)$/)
+                ? 'bg-yellow-50 border-yellow-200'
+                : 'bg-red-50 border-red-200'
+            }`}>
+              <p className={`font-medium mb-1 ${
+                selectedFile && !selectedFile.name.match(/\.(csv)$/)
+                  ? 'text-yellow-600'
+                  : 'text-red-600'
+              }`}>
+                {selectedFile && !selectedFile.name.match(/\.(csv)$/)
+                  ? 'Note'
+                  : 'Error'}
+              </p>
+              <p className={`text-sm ${
+                selectedFile && !selectedFile.name.match(/\.(csv)$/)
+                  ? 'text-yellow-500'
+                  : 'text-red-500'
+              }`}>
+                {error}
+              </p>
             </div>
           )}
           

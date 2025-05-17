@@ -1,22 +1,33 @@
 import { NextResponse } from 'next/server';
 
-// Function to generate an embed token from your Power BI service
-async function getPowerBIToken() {
-  // This should be replaced with your actual Power BI authentication logic
-  const response = await fetch('https://api.powerbi.com/v1.0/myorg/groups/{groupId}/reports/{reportId}/GenerateToken', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.POWERBI_ACCESS_TOKEN}`
-    },
-    body: JSON.stringify({
-      accessLevel: 'View'
-    })
-  });
+// Function to validate CSV headersfunction validateHeaders(headers) {  const requiredHeaders = ['Date', 'Amount'];  const sourceHeaders = ['Source', 'Category']; // Accept either Source or Category  const optionalHeaders = ['Description'];    const normalizedHeaders = headers.map(h => h.trim().toLowerCase());    // Check required headers  const missingRequired = requiredHeaders.filter(    header => !normalizedHeaders.includes(header.toLowerCase())  );    // Check if at least one of Source or Category is present  const hasSourceColumn = sourceHeaders.some(    header => normalizedHeaders.includes(header.toLowerCase())  );    if (!hasSourceColumn) {    missingRequired.push('Source/Category');  }    return missingRequired;}
 
-  const data = await response.json();
-  return data.token;
+// Function to validate row data
+function validateRow(row, headers) {
+  const errors = [];
+  
+  // Validate Date
+  const dateIndex = headers.findIndex(h => h.trim().toLowerCase() === 'date');
+  if (dateIndex !== -1) {
+    const date = new Date(row[dateIndex]);
+    if (isNaN(date.getTime())) {
+      errors.push(`Invalid date format: ${row[dateIndex]}. Use YYYY-MM-DD format.`);
+    }
+  }
+
+  // Validate Amount
+  const amountIndex = headers.findIndex(h => h.trim().toLowerCase() === 'amount');
+  if (amountIndex !== -1) {
+    const amount = parseFloat(row[amountIndex]);
+    if (isNaN(amount)) {
+      errors.push(`Invalid amount: ${row[amountIndex]}. Must be a number.`);
+    }
+  }
+
+  return errors;
 }
+
+
 
 export async function POST(request) {
   try {
@@ -41,48 +52,63 @@ export async function POST(request) {
 
     // Parse CSV content
     const rows = fileContent.split('\n').map(row => row.split(','));
-    const headers = rows[0].map(h => h.trim());
-    const data = rows.slice(1).filter(row => row.length === headers.length);
+    
+    if (rows.length < 2) {
+      return NextResponse.json(
+        { message: 'File contains no data rows' },
+        { status: 400 }
+      );
+    }
 
-    // Format data for Power BI
-    const formattedData = data.map(row => {
-      const rowData = {};
-      headers.forEach((header, index) => {
-        rowData[header.trim()] = row[index].trim();
-      });
-      return rowData;
-    });
+    const headers = rows[0].map(h => h.trim());
+
+    // Validate headers
+    const missingHeaders = validateHeaders(headers);
+    if (missingHeaders.length > 0) {
+      return NextResponse.json(
+        { message: `Missing required columns: ${missingHeaders.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // Process data rows
+    const formattedData = [];
+        const headerIndexes = {      date: headers.findIndex(h => h.toLowerCase() === 'date'),      source: headers.findIndex(h => h.toLowerCase() === 'source') !== -1         ? headers.findIndex(h => h.toLowerCase() === 'source')        : headers.findIndex(h => h.toLowerCase() === 'category'),      amount: headers.findIndex(h => h.toLowerCase() === 'amount'),      description: headers.findIndex(h => h.toLowerCase() === 'description')    };
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (row.length >= Math.min(...Object.values(headerIndexes).filter(i => i !== -1))) {
+        const amount = parseFloat(row[headerIndexes.amount]);
+        if (!isNaN(amount)) {
+          formattedData.push({
+            date: row[headerIndexes.date].trim(),
+            source: row[headerIndexes.source].trim(),
+            amount: amount,
+            description: headerIndexes.description !== -1 ? row[headerIndexes.description]?.trim() || '' : ''
+          });
+        }
+      }
+    }
 
     // Calculate summary statistics
     const summary = {
-      totalIncome: formattedData.reduce((sum, row) => sum + parseFloat(row.Amount || 0), 0),
+      totalIncome: formattedData.reduce((sum, row) => sum + row.amount, 0),
       sourceBreakdown: formattedData.reduce((acc, row) => {
-        const source = row.Source || 'Other';
-        acc[source] = (acc[source] || 0) + parseFloat(row.Amount || 0);
+        const source = row.source || 'Other';
+        acc[source] = (acc[source] || 0) + row.amount;
         return acc;
       }, {}),
       monthlyTrend: formattedData.reduce((acc, row) => {
-        const date = new Date(row.Date);
-        const monthYear = `${date.getFullYear()}-${date.getMonth() + 1}`;
-        acc[monthYear] = (acc[monthYear] || 0) + parseFloat(row.Amount || 0);
+        const date = new Date(row.date);
+        if (!isNaN(date.getTime())) {
+          const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          acc[monthYear] = (acc[monthYear] || 0) + row.amount;
+        }
         return acc;
       }, {})
     };
 
-    // Get fresh Power BI embed token
-    const embedToken = await getPowerBIToken();
-
-    return NextResponse.json({
-      message: 'File processed successfully',
-      status: 'success',
-      summary,
-      powerbi: {
-        embedToken,
-        reportId: process.env.POWERBI_INCOME_REPORT_ID,
-        embedUrl: process.env.POWERBI_INCOME_EMBED_URL
-      },
-      datasetId: process.env.POWERBI_INCOME_DATASET_ID
-    });
+        return NextResponse.json({      message: 'File processed successfully',      status: 'success',      summary    });
 
   } catch (error) {
     console.error('Error processing file:', error);
