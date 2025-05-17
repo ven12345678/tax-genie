@@ -12,7 +12,9 @@
     "next": "15.3.2",
     "openai": "^4.100.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "powerbi-client": "^2.22.3",
+    "powerbi-client-react": "^1.4.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
