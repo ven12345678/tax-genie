@@ -15,6 +15,7 @@ export default function IncomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
     fetchIncomes();
@@ -37,9 +38,43 @@ export default function IncomePage() {
     }
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
+      const file = event.target.files[0];
+      setSelectedFile(file);
+      
+      // Start document analysis
+      setAnalyzing(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch('/api/analyze-document', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          // Auto-fill the form with extracted data
+          setFormData(prev => ({
+            ...prev,
+            amount: result.data.amount || '',
+            source: result.data.source || '',
+            date: result.data.date || '',
+            description: result.data.description || '',
+            category: result.data.category || ''
+          }));
+        } else {
+          setError(result.message || 'Failed to analyze document');
+        }
+      } catch (error) {
+        setError('Error analyzing document');
+        console.error('Error:', error);
+      } finally {
+        setAnalyzing(false);
+      }
     }
   };
 
@@ -104,6 +139,34 @@ export default function IncomePage() {
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
+              <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 mb-2">
+                Supporting Document
+              </label>
+              <div className="mt-1 flex items-center">
+                <label
+                  htmlFor="file-upload"
+                  className="cursor-pointer bg-white px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Choose file
+                  <input
+                    id="file-upload"
+                    name="file-upload"
+                    type="file"
+                    className="sr-only"
+                    onChange={handleFileChange}
+                    accept="image/*,.pdf"
+                  />
+                </label>
+                <span className="ml-3 text-sm text-gray-500">
+                  {analyzing ? 'Analyzing document...' : selectedFile ? selectedFile.name : 'No file selected'}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Upload a supporting document (image or PDF) to automatically fill the form
+              </p>
+            </div>
+
+            <div>
               <label htmlFor="amount" className="block text-sm font-medium text-gray-700">Amount</label>
               <input
                 type="number"
@@ -164,31 +227,6 @@ export default function IncomePage() {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="Enter category (optional)"
               />
-            </div>
-            <div>
-              <label htmlFor="file" className="block text-sm font-medium text-gray-700">Supporting Document</label>
-              <div className="mt-1 flex items-center">
-                <label
-                  htmlFor="file-upload"
-                  className="cursor-pointer bg-white px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Choose file
-                  <input
-                    id="file-upload"
-                    name="file-upload"
-                    type="file"
-                    className="sr-only"
-                    onChange={handleFileChange}
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  />
-                </label>
-                <span className="ml-3 text-sm text-gray-500">
-                  {selectedFile ? selectedFile.name : 'No file selected'}
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-gray-500">
-                Accepted file types: PDF, JPG, PNG, DOC, DOCX
-              </p>
             </div>
             <button
               type="submit"
