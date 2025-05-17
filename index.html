@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>File Upload</title>
+</head>
+<body>
+  <h2>Upload a CSV File</h2>
+  <input type="file" id="fileInput" accept=".csv" />
+  <button onclick="upload()">Upload</button>
+
+  <script>
+    async function upload() {
+      const fileInput = document.getElementById("fileInput");
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("http://localhost:8000/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+      console.log(result);
+      alert("Uploaded: " + result.filename);
+    }
+  </script>
+</body>
+</html>
