@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import connectDB from '@/lib/mongodb';
+import TaxSummary from '@/models/TaxSummary';
 
 const client = new OpenAI({
   apiKey: process.env.DASHSCOPE_API_KEY,
@@ -114,6 +116,22 @@ export async function POST(request) {
             raw: completion.choices[0].message.content
           }, { status: 500 });
         }
+      }
+      // Save tax summary to MongoDB
+      try {
+        await connectDB();
+        await TaxSummary.create({
+          totalIncome: analysis.totalIncome,
+          totalDeductions: analysis.totalDeductions,
+          taxableIncome: analysis.taxableIncome,
+          estimatedTax: analysis.estimatedTax,
+          declarableExpenses: analysis.declarableExpenses,
+          taxReliefExpenses: analysis.taxReliefExpenses,
+          analysis: analysis.analysis,
+        });
+      } catch (dbError) {
+        console.error('Error saving tax summary to MongoDB:', dbError);
+        // Optionally, you can return an error or continue
       }
       return NextResponse.json(analysis);
     } catch (modelError) {

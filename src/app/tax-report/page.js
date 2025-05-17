@@ -196,19 +196,19 @@ export default function TaxReportPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-medium mb-2">Total Income</h3>
-              <p className="text-2xl font-bold text-green-600">$0.00</p>
+              <p className="text-2xl font-bold text-green-600">RM0.00</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-medium mb-2">Total Deductions</h3>
-              <p className="text-2xl font-bold text-red-600">$0.00</p>
+              <p className="text-2xl font-bold text-red-600">RM0.00</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-medium mb-2">Taxable Income</h3>
-              <p className="text-2xl font-bold text-blue-600">$0.00</p>
+              <p className="text-2xl font-bold text-blue-600">RM0.00</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-lg font-medium mb-2">Estimated Tax</h3>
-              <p className="text-2xl font-bold text-purple-600">$0.00</p>
+              <p className="text-2xl font-bold text-purple-600">RM0.00</p>
             </div>
           </div>
         </div>
