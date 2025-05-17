@@ -5,24 +5,24 @@ const expenseSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  description: {
+  category: {
     type: String,
     required: true,
   },
-  category: {
+  description: {
     type: String,
     required: true,
   },
   date: {
     type: Date,
-    default: Date.now,
+    required: true,
   },
   userId: {
     type: String,
     required: true,
-  }
+  },
+}, {
+  timestamps: true,
 });
 
-const Expense = mongoose.models.Expense || mongoose.model('Expense', expenseSchema);
-
-export default Expense; 
+export default mongoose.models.Expense || mongoose.model('Expense', expenseSchema); 

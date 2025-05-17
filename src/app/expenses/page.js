@@ -125,6 +125,34 @@ export default function ExpensesPage() {
     }
   };
 
+  const handleDelete = async (expenseId) => {
+    if (!confirm('Are you sure you want to delete this expense?')) {
+      return;
+    }
+
+    try {
+      console.log('Attempting to delete expense with ID:', expenseId);
+      
+      const response = await fetch(`/api/expenses/${expenseId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+      console.log('Delete response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to delete expense');
+      }
+
+      // Remove the deleted expense from the state
+      setExpenses(prevExpenses => prevExpenses.filter(expense => expense._id !== expenseId));
+      console.log('Expense deleted successfully');
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      setError(error.message || 'Failed to delete expense. Please try again.');
+    }
+  };
+
   const renderExpenseChart = () => {
     if (!analysisData?.categoryBreakdown) return null;
 
@@ -295,15 +323,26 @@ export default function ExpensesPage() {
         <div className="space-y-4">
           {expenses.length > 0 ? (
             expenses.map((expense) => (
-              <div key={expense.id} className="border-b pb-4">
+              <div key={expense._id} className="border-b pb-4">
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="font-medium">{expense.description}</h3>
                     <p className="text-sm text-gray-500">{expense.category}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">${expense.amount.toFixed(2)}</p>
-                    <p className="text-sm text-gray-500">{new Date(expense.date).toLocaleDateString()}</p>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <p className="font-medium">${expense.amount.toFixed(2)}</p>
+                      <p className="text-sm text-gray-500">{new Date(expense.date).toLocaleDateString()}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDelete(expense._id)}
+                      className="p-2 text-red-600 hover:text-red-800 focus:outline-none"
+                      title="Delete expense"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>
