@@ -121,6 +121,29 @@ export default function IncomePage() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this income record?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/income?id=${id}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        setSuccess('Income deleted successfully');
+        // Remove the deleted income from the state
+        setIncomes(prevIncomes => prevIncomes.filter(income => income._id !== id));
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      setError('Failed to delete income');
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Income Tracking</h1>
@@ -268,6 +291,9 @@ export default function IncomePage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Category
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -287,6 +313,14 @@ export default function IncomePage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {income.category || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button
+                          onClick={() => handleDelete(income._id)}
+                          className="text-red-600 hover:text-red-900 focus:outline-none"
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))}

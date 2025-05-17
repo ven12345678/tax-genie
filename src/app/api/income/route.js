@@ -40,4 +40,40 @@ export async function GET() {
       error: error.message 
     }, { status: 500 });
   }
+}
+
+export async function DELETE(request) {
+  try {
+    await connectDB();
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Income ID is required' 
+      }, { status: 400 });
+    }
+
+    const result = await Income.findByIdAndDelete(id);
+    
+    if (!result) {
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Income not found' 
+      }, { status: 404 });
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Income deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Error deleting income:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Error deleting income',
+      error: error.message 
+    }, { status: 500 });
+  }
 } 
