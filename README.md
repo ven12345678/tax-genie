@@ -75,20 +75,33 @@ These challenges often result in missed deductions, misreported income, and unex
 
 ---
 
+# Submission for Alibaba Cloud Malaysia AI Hackathon 2025 
+
+This repository contains our project submission for the Alibaba Cloud AI Hackathon
+
+## 🔗 Key Resources
+
+- 📄 **Documentation**:  
+  - [Canva Slides](https://www.canva.com/design/DAGnwUf3vx0/J1_OKLRkXWRSlGm7Q1gPvw/view?utm_content=DAGnwUf3vx0&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=heafae751ee)  
+  - [Demo Video](https://www.youtube.com/watch?v=zfcsMQ545og)
+
+
+---
+
 ## 👥 Team
 
 - **Venesse Hee Chiao Wei**  
-  - *Role*:
+  - *Role*: Database Integration
   - [LinkedIn](https://www.linkedin.com/in/heechiaowei)
 
 - **Lee Shi En**  
-  - *Role*:
-  - [LinkedIn]()
+  - *Role*: AI Integration
+  - [LinkedIn](https://www.linkedin.com/in/lee-shi-en-b411b5356/)
 
 - **Germaine Chua Jean Ying**  
-  - *Role*:
-  - [LinkedIn]()
+  - *Role*: Data Visualisation
+  - [LinkedIn](https://www.linkedin.com/in/germaine-chua-35851b2b9/)
  
 - **Yeo Shi JIa**  
-  - *Role*:
-  - [LinkedIn]()
+  - *Role*: Frontend Integration & Demo Video
+  - [LinkedIn](https://www.linkedin.com/in/shi-jia-yeo-b77b63259/)
